@@ -15,8 +15,6 @@ const config = {
 const app = express();
 
 app.post("/webhook", line.middleware(config), (req, res) => {
-  console.log(req.body.events);
-
   Promise.all(req.body.events.map(handleEvent)).then((result) =>
     res.json(result)
   );
@@ -47,6 +45,8 @@ async function handleEvent(event) {
   });
 
   messages.push(reply.data.choices[0].message);
+
+  console.log(messages);
 
   return client.replyMessage(event.replyToken, {
     type: "text",
