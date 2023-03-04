@@ -24,6 +24,8 @@ app.post("/webhook", line.middleware(config), (req, res) => {
 
 const client = new line.Client(config);
 
+const messages = [];
+
 async function handleEvent(event) {
   if (event.type !== "message" || event.message.type !== "text") {
     return Promise.resolve(null);
@@ -34,10 +36,17 @@ async function handleEvent(event) {
   });
   const openai = new OpenAIApi(configuration);
 
+  messages.push({
+    role: "user",
+    content: event.message.text,
+  });
+
   const reply = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
-    messages: [{ role: "user", content: event.message.text }],
+    messages: messages,
   });
+
+  messages.push(reply.data.choices[0].message);
 
   return client.replyMessage(event.replyToken, {
     type: "text",
