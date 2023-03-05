@@ -1,8 +1,10 @@
-"use strict";
-
 import * as line from "@line/bot-sdk";
-import express from "express";
-import { openai } from "./chatgpt.js";
+import * as dotenv from "dotenv";
+import * as express from "express";
+import { ChatCompletionRequestMessage } from "openai";
+import { openai } from "./chatgpt";
+
+dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 
@@ -21,7 +23,7 @@ app.post("/webhook", line.middleware(config), (req, res) => {
 
 const client = new line.Client(config);
 
-const messages = [];
+const messages: Array<ChatCompletionRequestMessage> = [];
 
 async function handleEvent(event) {
   if (event.type !== "message" || event.message.type !== "text") {
