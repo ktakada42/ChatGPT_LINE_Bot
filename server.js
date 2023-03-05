@@ -1,11 +1,10 @@
 "use strict";
 
-require("dotenv").config();
+import * as line from "@line/bot-sdk";
+import express from "express";
+import { openai } from "./chatgpt.js";
 
-const express = require("express");
-const line = require("@line/bot-sdk");
 const PORT = process.env.PORT || 3000;
-const { Configuration, OpenAIApi } = require("openai");
 
 const config = {
   channelSecret: process.env.CHANNEL_SECRET,
@@ -28,11 +27,6 @@ async function handleEvent(event) {
   if (event.type !== "message" || event.message.type !== "text") {
     return Promise.resolve(null);
   }
-
-  const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-  const openai = new OpenAIApi(configuration);
 
   messages.push({
     role: "user",
