@@ -1,11 +1,8 @@
 import { middleware, WebhookEvent } from "@line/bot-sdk";
-import * as dotenv from "dotenv";
 import * as express from "express";
 import { ChatCompletionRequestMessage } from "openai";
 import { openAIApi } from "./chatgpt";
 import { channelSecret, lineBotClient } from "./linebot";
-
-dotenv.config();
 
 const messages: Array<ChatCompletionRequestMessage> = [];
 
@@ -34,7 +31,7 @@ const handleEvent = async (event: WebhookEvent) => {
   });
 };
 
-const PORT = process.env.PORT || 3000;
+const PORT = 10000;
 
 const app = express();
 
