@@ -1,27 +1,17 @@
-import { middleware } from "@line/bot-sdk";
+import { middleware, WebhookEvent } from "@line/bot-sdk";
 import * as dotenv from "dotenv";
 import * as express from "express";
 import { ChatCompletionRequestMessage } from "openai";
 import { openAIApi } from "./chatgpt";
-import { config, lineBotClient } from "./linebot";
+import { channelSecret, lineBotClient } from "./linebot";
 
 dotenv.config();
 
-const PORT = process.env.PORT || 3000;
-
-const app = express();
-
-app.post("/webhook", middleware(config), (req, res) => {
-  Promise.all(req.body.events.map(handleEvent)).then((result) =>
-    res.json(result)
-  );
-});
-
 const messages: Array<ChatCompletionRequestMessage> = [];
 
-async function handleEvent(event) {
+const handleEvent = async (event: WebhookEvent) => {
   if (event.type !== "message" || event.message.type !== "text") {
-    return Promise.resolve(null);
+    return null;
   }
 
   messages.push({
@@ -40,9 +30,30 @@ async function handleEvent(event) {
 
   return lineBotClient.replyMessage(event.replyToken, {
     type: "text",
-    text: reply.data.choices[0].message.content.trim(), //実際に返信の言葉を入れる箇所
+    text: reply.data.choices[0].message?.content!.trim(), //実際に返信の言葉を入れる箇所
   });
-}
+};
+
+const PORT = process.env.PORT || 3000;
+
+const app = express();
+
+app.use(
+  middleware({
+    channelSecret: channelSecret ?? "",
+  })
+);
+
+app.post("/webhook", async (req, res) => {
+  try {
+    const events: WebhookEvent[] = req.body.events;
+    const results = await Promise.all(events.map(handleEvent));
+    return res.json(results);
+  } catch (err) {
+    console.error(err);
+    return res.status(500);
+  }
+});
 
 app.listen(PORT);
 console.log(`Server running at ${PORT}`);

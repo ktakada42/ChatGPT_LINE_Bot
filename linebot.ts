@@ -3,8 +3,10 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-export const config = {
-  channelSecret: process.env.CHANNEL_SECRET,
+export const channelSecret = process.env.CHANNEL_SECRET;
+
+const config = {
+  channelSecret: channelSecret,
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
 };
 
