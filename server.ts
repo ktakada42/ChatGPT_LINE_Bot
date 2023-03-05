@@ -2,7 +2,7 @@ import { middleware } from "@line/bot-sdk";
 import * as dotenv from "dotenv";
 import * as express from "express";
 import { ChatCompletionRequestMessage } from "openai";
-import { openai } from "./chatgpt";
+import { openAIApi } from "./chatgpt";
 import { config, lineBotClient } from "./linebot";
 
 dotenv.config();
@@ -29,7 +29,7 @@ async function handleEvent(event) {
     content: event.message.text,
   });
 
-  const reply = await openai.createChatCompletion({
+  const reply = await openAIApi.createChatCompletion({
     model: "gpt-3.5-turbo",
     messages: messages,
   });
