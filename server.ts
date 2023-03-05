@@ -1,27 +1,21 @@
-import * as line from "@line/bot-sdk";
+import { middleware } from "@line/bot-sdk";
 import * as dotenv from "dotenv";
 import * as express from "express";
 import { ChatCompletionRequestMessage } from "openai";
 import { openai } from "./chatgpt";
+import { config, lineBotClient } from "./linebot";
 
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 
-const config = {
-  channelSecret: process.env.CHANNEL_SECRET,
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-};
-
 const app = express();
 
-app.post("/webhook", line.middleware(config), (req, res) => {
+app.post("/webhook", middleware(config), (req, res) => {
   Promise.all(req.body.events.map(handleEvent)).then((result) =>
     res.json(result)
   );
 });
-
-const client = new line.Client(config);
 
 const messages: Array<ChatCompletionRequestMessage> = [];
 
@@ -44,7 +38,7 @@ async function handleEvent(event) {
 
   console.log(messages);
 
-  return client.replyMessage(event.replyToken, {
+  return lineBotClient.replyMessage(event.replyToken, {
     type: "text",
     text: reply.data.choices[0].message.content.trim(), //実際に返信の言葉を入れる箇所
   });
