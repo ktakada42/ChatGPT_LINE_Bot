@@ -3,32 +3,67 @@ import * as express from "express";
 import { ChatCompletionRequestMessage } from "openai";
 import { openAIApi } from "./chatgpt";
 import { channelSecret, lineBotClient } from "./linebot";
-
-const messages: Array<ChatCompletionRequestMessage> = [];
+import { v4 } from "uuid";
+import { insertQ, selectQ, dateTime3Format, databaseUrl } from "./mysql";
+import * as mysql from "mysql2/promise";
+import * as moment from "moment";
 
 const handleEvent = async (event: WebhookEvent) => {
   if (event.type !== "message" || event.message.type !== "text") {
     return null;
   }
 
-  messages.push({
-    role: "user",
-    content: event.message.text,
-  });
+  const connection = await mysql.createConnection(databaseUrl);
+  try {
+    await connection.beginTransaction();
 
-  const reply = await openAIApi.createChatCompletion({
-    model: "gpt-3.5-turbo",
-    messages: messages,
-  });
+    // ユーザーからのメッセージをINSERT
+    await connection.query(insertQ, [
+      v4(),
+      event.message.text,
+      event.source.userId!,
+      moment().format(dateTime3Format),
+      "user",
+    ]);
 
-  messages.push(reply.data.choices[0].message);
+    // ユーザーとの過去やり取りを取得し、ChatGPTに渡せるようにする
+    const [rows] = await connection.query(selectQ, event.source.userId!);
 
-  console.log(messages);
+    const messages: ChatCompletionRequestMessage[] = (
+      rows as mysql.RowDataPacket[]
+    ).map((row) => {
+      return {
+        role: row.role,
+        content: row.content,
+      };
+    });
 
-  return lineBotClient.replyMessage(event.replyToken, {
-    type: "text",
-    text: reply.data.choices[0].message?.content!.trim(), //実際に返信の言葉を入れる箇所
-  });
+    // ChatGPTからのメッセージを取得
+    const reply = await openAIApi.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: messages,
+    });
+
+    // ChatGPTからのメッセージをINSERT
+    await connection.query(insertQ, [
+      v4(),
+      reply.data.choices[0].message?.content!.trim(),
+      event.source.userId!,
+      moment().format(dateTime3Format),
+      "assistant",
+    ]);
+
+    await connection.commit();
+
+    return lineBotClient.replyMessage(event.replyToken, {
+      type: "text",
+      text: reply.data.choices[0].message?.content!.trim(), //実際に返信の言葉を入れる箇所
+    });
+  } catch (err) {
+    await connection.rollback();
+  } finally {
+    connection.end();
+  }
 };
 
 const PORT = 10000;
