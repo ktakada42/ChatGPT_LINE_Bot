@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "build": "npm install && tsc server.ts",
+    "build": "npm install",
     "start": "node server.js",
     "lint": "eslint -c .eslintrc.json **.ts",
     "lint:fix": "eslint -c .eslintrc.json **.ts --fix"
