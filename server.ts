@@ -23,6 +23,7 @@ const handleEvent = async (event: WebhookEvent) => {
       moment().format(dateTime3Format),
       "user",
     ]);
+    console.log(`Successfully inserted message: ${event.message.text}`);
 
     // ユーザーとの過去やり取りを取得し、ChatGPTに渡せるようにする
     const [rows] = await connection.query(selectQ, event.source.userId!);
@@ -42,6 +43,7 @@ const handleEvent = async (event: WebhookEvent) => {
       model: "gpt-3.5-turbo",
       messages: messages,
     });
+    console.log(`Reply is: ${reply.data.choices[0].message?.content!.trim()}`);
 
     // ChatGPTからのメッセージをINSERT
     await connection.query(insertQ, [
@@ -51,6 +53,7 @@ const handleEvent = async (event: WebhookEvent) => {
       moment().format(dateTime3Format),
       "assistant",
     ]);
+    console.log("Successfully inserted ChatGPT reply");
 
     return lineBotClient.replyMessage(event.replyToken, {
       type: "text",

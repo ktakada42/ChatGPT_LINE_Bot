@@ -46,19 +46,19 @@ var mysql = require("mysql2/promise");
 var moment = require("moment");
 var handleEvent = function (event) { return __awaiter(void 0, void 0, void 0, function () {
     var connection, rows, sortedRows, messages, reply, err_1;
-    var _a, _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
+    var _a, _b, _c;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
             case 0:
                 if (event.type !== "message" || event.message.type !== "text") {
                     return [2 /*return*/, null];
                 }
                 return [4 /*yield*/, mysql.createConnection(mysql_1.databaseUrl)];
             case 1:
-                connection = _c.sent();
-                _c.label = 2;
+                connection = _d.sent();
+                _d.label = 2;
             case 2:
-                _c.trys.push([2, 7, 9, 10]);
+                _d.trys.push([2, 7, 9, 10]);
                 // ユーザーからのメッセージをINSERT
                 return [4 /*yield*/, connection.query(mysql_1.insertQ, [
                         (0, uuid_1.v4)(),
@@ -69,10 +69,11 @@ var handleEvent = function (event) { return __awaiter(void 0, void 0, void 0, fu
                     ])];
             case 3:
                 // ユーザーからのメッセージをINSERT
-                _c.sent();
+                _d.sent();
+                console.log("Successfully inserted message: ".concat(event.message.text));
                 return [4 /*yield*/, connection.query(mysql_1.selectQ, event.source.userId)];
             case 4:
-                rows = (_c.sent())[0];
+                rows = (_d.sent())[0];
                 sortedRows = rows.sort(function (a, b) {
                     return moment(a.typedAt).diff(moment(b.typedAt));
                 });
@@ -87,27 +88,29 @@ var handleEvent = function (event) { return __awaiter(void 0, void 0, void 0, fu
                         messages: messages,
                     })];
             case 5:
-                reply = _c.sent();
+                reply = _d.sent();
+                console.log("Reply is: ".concat((_a = reply.data.choices[0].message) === null || _a === void 0 ? void 0 : _a.content.trim()));
                 // ChatGPTからのメッセージをINSERT
                 return [4 /*yield*/, connection.query(mysql_1.insertQ, [
                         (0, uuid_1.v4)(),
-                        (_a = reply.data.choices[0].message) === null || _a === void 0 ? void 0 : _a.content.trim(),
+                        (_b = reply.data.choices[0].message) === null || _b === void 0 ? void 0 : _b.content.trim(),
                         event.source.userId,
                         moment().format(mysql_1.dateTime3Format),
                         "assistant",
                     ])];
             case 6:
                 // ChatGPTからのメッセージをINSERT
-                _c.sent();
+                _d.sent();
+                console.log("Successfully inserted ChatGPT reply");
                 return [2 /*return*/, linebot_1.lineBotClient.replyMessage(event.replyToken, {
                         type: "text",
-                        text: (_b = reply.data.choices[0].message) === null || _b === void 0 ? void 0 : _b.content.trim(), //実際に返信の言葉を入れる箇所
+                        text: (_c = reply.data.choices[0].message) === null || _c === void 0 ? void 0 : _c.content.trim(), //実際に返信の言葉を入れる箇所
                     })];
             case 7:
-                err_1 = _c.sent();
+                err_1 = _d.sent();
                 return [4 /*yield*/, connection.rollback()];
             case 8:
-                _c.sent();
+                _d.sent();
                 return [3 /*break*/, 10];
             case 9:
                 connection.end();
