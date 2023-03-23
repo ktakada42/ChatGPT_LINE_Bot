@@ -45,7 +45,7 @@ var mysql_1 = require("./mysql");
 var mysql = require("mysql2/promise");
 var moment = require("moment");
 var handleEvent = function (event) { return __awaiter(void 0, void 0, void 0, function () {
-    var connection, rows, messages, reply, err_1;
+    var connection, rows, sortedRows, messages, reply, err_1;
     var _a, _b;
     return __generator(this, function (_c) {
         switch (_c.label) {
@@ -58,10 +58,7 @@ var handleEvent = function (event) { return __awaiter(void 0, void 0, void 0, fu
                 connection = _c.sent();
                 _c.label = 2;
             case 2:
-                _c.trys.push([2, 9, 11, 12]);
-                return [4 /*yield*/, connection.beginTransaction()];
-            case 3:
-                _c.sent();
+                _c.trys.push([2, 7, 9, 10]);
                 // ユーザーからのメッセージをINSERT
                 return [4 /*yield*/, connection.query(mysql_1.insertQ, [
                         (0, uuid_1.v4)(),
@@ -70,13 +67,16 @@ var handleEvent = function (event) { return __awaiter(void 0, void 0, void 0, fu
                         moment().format(mysql_1.dateTime3Format),
                         "user",
                     ])];
-            case 4:
+            case 3:
                 // ユーザーからのメッセージをINSERT
                 _c.sent();
                 return [4 /*yield*/, connection.query(mysql_1.selectQ, event.source.userId)];
-            case 5:
+            case 4:
                 rows = (_c.sent())[0];
-                messages = rows.map(function (row) {
+                sortedRows = rows.sort(function (a, b) {
+                    return moment(a.typedAt).diff(moment(b.typedAt));
+                });
+                messages = sortedRows.map(function (row) {
                     return {
                         role: row.role,
                         content: row.content,
@@ -86,7 +86,7 @@ var handleEvent = function (event) { return __awaiter(void 0, void 0, void 0, fu
                         model: "gpt-3.5-turbo",
                         messages: messages,
                     })];
-            case 6:
+            case 5:
                 reply = _c.sent();
                 // ChatGPTからのメッセージをINSERT
                 return [4 /*yield*/, connection.query(mysql_1.insertQ, [
@@ -96,26 +96,23 @@ var handleEvent = function (event) { return __awaiter(void 0, void 0, void 0, fu
                         moment().format(mysql_1.dateTime3Format),
                         "assistant",
                     ])];
-            case 7:
+            case 6:
                 // ChatGPTからのメッセージをINSERT
-                _c.sent();
-                return [4 /*yield*/, connection.commit()];
-            case 8:
                 _c.sent();
                 return [2 /*return*/, linebot_1.lineBotClient.replyMessage(event.replyToken, {
                         type: "text",
                         text: (_b = reply.data.choices[0].message) === null || _b === void 0 ? void 0 : _b.content.trim(), //実際に返信の言葉を入れる箇所
                     })];
-            case 9:
+            case 7:
                 err_1 = _c.sent();
                 return [4 /*yield*/, connection.rollback()];
-            case 10:
+            case 8:
                 _c.sent();
-                return [3 /*break*/, 12];
-            case 11:
+                return [3 /*break*/, 10];
+            case 9:
                 connection.end();
                 return [7 /*endfinally*/];
-            case 12: return [2 /*return*/];
+            case 10: return [2 /*return*/];
         }
     });
 }); };

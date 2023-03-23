@@ -6,4 +6,4 @@ dotenv.config();
 exports.databaseUrl = process.env.DATABASE_URL;
 exports.dateTime3Format = "YYYY-MM-DD HH:mm:ss.SSS";
 exports.insertQ = "INSERT INTO messages_history VALUES (?, ?, ?, ?, ?)";
-exports.selectQ = "SELECT role, content FROM messages_history WHERE userId = ? ORDER BY typedAt ASC LIMIT 30";
+exports.selectQ = "SELECT role, content, typedAt FROM messages_history WHERE userId = ? ORDER BY typedAt DESC LIMIT 17";

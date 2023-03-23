@@ -15,8 +15,6 @@ const handleEvent = async (event: WebhookEvent) => {
 
   const connection = await mysql.createConnection(databaseUrl);
   try {
-    await connection.beginTransaction();
-
     // ユーザーからのメッセージをINSERT
     await connection.query(insertQ, [
       v4(),
@@ -28,10 +26,11 @@ const handleEvent = async (event: WebhookEvent) => {
 
     // ユーザーとの過去やり取りを取得し、ChatGPTに渡せるようにする
     const [rows] = await connection.query(selectQ, event.source.userId!);
+    const sortedRows = (rows as mysql.RowDataPacket[]).sort((a: any, b: any) =>
+      moment(a.typedAt).diff(moment(b.typedAt))
+    );
 
-    const messages: ChatCompletionRequestMessage[] = (
-      rows as mysql.RowDataPacket[]
-    ).map((row) => {
+    const messages: ChatCompletionRequestMessage[] = sortedRows.map((row) => {
       return {
         role: row.role,
         content: row.content,
@@ -52,8 +51,6 @@ const handleEvent = async (event: WebhookEvent) => {
       moment().format(dateTime3Format),
       "assistant",
     ]);
-
-    await connection.commit();
 
     return lineBotClient.replyMessage(event.replyToken, {
       type: "text",
